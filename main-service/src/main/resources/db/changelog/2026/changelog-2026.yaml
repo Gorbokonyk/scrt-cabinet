@@ -1,4 +1,0 @@
-databaseChangeLog:
-  - include:
-      relativeToChangelogFile: true
-      file: 2026-10/changelog-2026-10.yaml

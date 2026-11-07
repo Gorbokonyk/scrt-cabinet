@@ -1,7 +1,0 @@
-databaseChangeLog:
-  - include:
-      relativeToChangelogFile: true
-      file: SCRT-1_first_db.yaml
-  - include:
-      relativeToChangelogFile: true
-      file: SCRT-2_first_db.yaml
