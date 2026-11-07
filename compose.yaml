@@ -1,26 +1,31 @@
 services:
-  postgres:
-    image: 'postgres:latest'
+  postgres-identity:
+    image: 'postgres:17'
     environment:
-      - 'POSTGRES_DB=scrt-main-db'
-      - 'POSTGRES_PASSWORD=1213'
-      - 'POSTGRES_USER=gorbokonyk'
-      - 'TZ=Europe/Kyiv'
-      - 'PGTZ=Europe/Kyiv'
+      POSTGRES_DB: ${POSTGRES_DB:-scrt_identity}
+      POSTGRES_USER: ${POSTGRES_USER:-scrt}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      TZ: UTC
+      PGTZ: UTC
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - postgres-identity-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U gorbokonyk -d scrt-main-db"]
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
       interval: 5s
       timeout: 3s
       retries: 10
 
   adminer:
-    image: 'adminer:latest'
+    image: 'adminer:5'
     ports:
-      - '8081:8080'
+      - '127.0.0.1:8081:8080'
     depends_on:
-      postgres:
+      postgres-identity:
         condition: service_healthy
     environment:
-      - ADMINER_DEFAULT_SERVER=postgres
+      ADMINER_DEFAULT_SERVER: postgres-identity
+
+volumes:
+  postgres-identity-data:
