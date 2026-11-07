@@ -1,0 +1,312 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-app-user
+      author: gorbokonyk
+      changes:
+        - createTable:
+            tableName: app_user
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_app_user
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uq_app_user_email
+              - column:
+                  name: password_hash
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: display_name
+                  type: VARCHAR(120)
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: ACTIVE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email_verified
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: failed_logins
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: locked_until
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - sql:
+            sql: >
+              alter table app_user add constraint ck_app_user_status
+              check (status in ('ACTIVE', 'BLOCKED', 'PENDING'))
+        - sql:
+            sql: >
+              alter table app_user add constraint ck_app_user_failed_logins
+              check (failed_logins >= 0)
+      rollback:
+        - dropTable:
+            tableName: app_user
+
+  # ------------------------------------------------------------- application
+  - changeSet:
+      id: create-application
+      author: gorbokonyk
+      changes:
+        - createTable:
+            tableName: application
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_application
+                    nullable: false
+              - column:
+                  name: client_id
+                  type: VARCHAR(100)
+                  remarks: OAuth2 client id, e.g. parser-bff
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uq_application_client_id
+              - column:
+                  name: name
+                  type: VARCHAR(150)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropTable:
+            tableName: application
+
+  # -------------------------------------------------------------------- role
+  - changeSet:
+      id: create-role
+      author: gorbokonyk
+      changes:
+        - createTable:
+            tableName: role
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_role
+                    nullable: false
+              - column:
+                  name: application_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_role_application
+                    references: application(id)
+              - column:
+                  name: code
+                  type: VARCHAR(60)
+                  remarks: e.g. ADMIN, MANAGER, VIEWER
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: VARCHAR(255)
+        - addUniqueConstraint:
+            tableName: role
+            columnNames: application_id, code
+            constraintName: uq_role_application_code
+      rollback:
+        - dropTable:
+            tableName: role
+
+  # ------------------------------------------------------------- permission
+  - changeSet:
+      id: create-permission
+      author: gorbokonyk
+      changes:
+        - createTable:
+            tableName: permission
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_permission
+                    nullable: false
+              - column:
+                  name: application_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_permission_application
+                    references: application(id)
+              - column:
+                  name: code
+                  type: VARCHAR(100)
+                  remarks: e.g. source:write
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: permission
+            columnNames: application_id, code
+            constraintName: uq_permission_application_code
+      rollback:
+        - dropTable:
+            tableName: permission
+
+  # ---------------------------------------------------------- role_permission
+  - changeSet:
+      id: create-role-permission
+      author: gorbokonyk
+      changes:
+        - createTable:
+            tableName: role_permission
+            columns:
+              - column:
+                  name: role_id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_role_permission
+                    nullable: false
+                    foreignKeyName: fk_role_permission_role
+                    references: role(id)
+                    deleteCascade: true
+              - column:
+                  name: permission_id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_role_permission
+                    nullable: false
+                    foreignKeyName: fk_role_permission_permission
+                    references: permission(id)
+                    deleteCascade: true
+      rollback:
+        - dropTable:
+            tableName: role_permission
+
+  # --------------------------------------------------------------- user_role
+  - changeSet:
+      id: create-user-role
+      author: gorbokonyk
+      changes:
+        - createTable:
+            tableName: user_role
+            columns:
+              - column:
+                  name: user_id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_user_role
+                    nullable: false
+                    foreignKeyName: fk_user_role_user
+                    references: app_user(id)
+                    deleteCascade: true
+              - column:
+                  name: role_id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_user_role
+                    nullable: false
+                    foreignKeyName: fk_user_role_role
+                    references: role(id)
+                    deleteCascade: true
+        - createIndex:
+            tableName: user_role
+            indexName: idx_user_role_role_id
+            columns:
+              - column:
+                  name: role_id
+      rollback:
+        - dropTable:
+            tableName: user_role
+
+  # ------------------------------------------------------------- audit_event
+  - changeSet:
+      id: create-audit-event
+      author: gorbokonyk
+      changes:
+        - createTable:
+            tableName: audit_event
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_audit_event
+                    nullable: false
+              - column:
+                  name: actor_id
+                  type: UUID
+              - column:
+                  name: action
+                  type: VARCHAR(60)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: target
+                  type: VARCHAR(120)
+              - column:
+                  name: details
+                  type: JSONB
+              - column:
+                  name: ip
+                  type: VARCHAR(64)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: audit_event
+            indexName: idx_audit_event_actor_created
+            columns:
+              - column:
+                  name: actor_id
+              - column:
+                  name: created_at
+      rollback:
+        - dropTable:
+            tableName: audit_event

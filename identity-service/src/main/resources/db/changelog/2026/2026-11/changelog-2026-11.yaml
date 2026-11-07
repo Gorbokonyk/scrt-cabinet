@@ -1,4 +1,4 @@
 databaseChangeLog:
   - include:
       relativeToChangelogFile: true
-      file: SCRT-3_identity_core.yaml
+      file: identity_core.yaml
