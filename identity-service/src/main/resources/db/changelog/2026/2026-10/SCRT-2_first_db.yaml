@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-add-age-to-users-table
+      author: gorbokonyk
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: age
+                  type: INT
+                  constraints:
+                    nullable: true
