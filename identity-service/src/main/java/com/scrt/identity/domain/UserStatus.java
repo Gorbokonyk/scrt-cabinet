@@ -1,6 +1,6 @@
 package com.scrt.identity.domain;
 
-public enum  UserStatus {
+public enum UserStatus {
     ACTIVE,
     BLOCKED,
     PENDING
