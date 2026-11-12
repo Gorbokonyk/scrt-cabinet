@@ -68,24 +68,6 @@ public class AuthorizationServerBeans {
     }
 
     /**
-     * Джерело криптографічних ключів (JWKSource) для підпису JWT-токенів.
-
-     * Генерує пару ключів RSA (2048 біт) під час старту додатку. Ці ключі
-     * використовуються сервером для підпису access-токенів, а також публікуються
-     * на ендпоінті /oauth2/jwks, щоб інші сервіси могли перевірити підпис.
-     *
-     * @return джерело ключів
-     * @throws Exception якщо не вдалося згенерувати ключі
-     */
-    @Bean
-    JWKSource<SecurityContext> jwkSource() throws Exception {
-        RSAKey rsaKey = new RSAKeyGenerator(2048)
-                .keyID(UUID.randomUUID().toString())
-                .generate();
-        return new ImmutableJWKSet<>(new JWKSet(rsaKey));
-    }
-
-    /**
      * Декодер JWT-токенів.
 
      * Використовується сервером для перевірки валідності токенів, які
@@ -187,7 +169,7 @@ public class AuthorizationServerBeans {
      *                   директорію або записати файл ключа
      */
     @Bean
-    JWKSource<SecurityContext> jwkSourceScrt(
+    JWKSource<SecurityContext> jwkSource(
             @Value("${scrt.jwt.key-file:./.keys/jwk.json}") String keyFile) throws Exception {
         Path path = Path.of(keyFile);
         RSAKey rsaKey;
