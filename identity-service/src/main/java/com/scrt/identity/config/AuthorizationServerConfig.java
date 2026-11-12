@@ -12,6 +12,21 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 
+/**
+ * Конфігурація безпеки для додатку, що виконує роль OAuth2 Authorization Server
+ * та Resource Server.
+
+ * Клас визначає два ланцюжки фільтрів (SecurityFilterChain), які працюють послідовно
+ * завдяки анотації Order:
+
+ * 1. Перший ланцюжок (Order 1): Обробляє суто OAuth2/OIDC ендпоінти
+ *    (наприклад, /oauth2/authorize, /oauth2/token). Він також налаштовує перевірку
+ *    JWT-токенів для захисту ресурсів API.
+
+ * 2. Другий ланцюжок (Order 2): Обробляє всі інші запити. Відповідає за
+ *    публічні ендпоінти (реєстрація, healthcheck) та надає сторінку логіну для
+ *    отримання сесії користувачем.
+ */
 @Configuration
 public class AuthorizationServerConfig {
 
@@ -20,6 +35,8 @@ public class AuthorizationServerConfig {
     SecurityFilterChain authorizationServerChain(HttpSecurity http) throws Exception {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
                 new OAuth2AuthorizationServerConfigurer();
+
+        http.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher());
 
         http.with(authorizationServerConfigurer, (authorizationServer) ->
                 authorizationServer.oidc(Customizer.withDefaults())

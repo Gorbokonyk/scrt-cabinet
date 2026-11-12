@@ -2,3 +2,6 @@ databaseChangeLog:
   - include:
       relativeToChangelogFile: true
       file: identity_core.yaml
+  - include:
+      relativeToChangelogFile: true
+      file: oauth2_server.yaml
