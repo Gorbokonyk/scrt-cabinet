@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: seed-scrt-bff-roles
+      author: gorbokonyk
+      changes:
+        - sql:
+            sql: |
+              insert into application (client_id, name)
+              values ('scrt-bff', 'SCRT Cabinet');
+
+              insert into role (application_id, code, description)
+              select id, 'USER', 'Звичайний користувач' from application where client_id = 'scrt-bff';
+              insert into role (application_id, code, description)
+              select id, 'ADMIN', 'Адміністратор' from application where client_id = 'scrt-bff';
+
+              insert into permission (application_id, code)
+              select a.id, p.code
+              from application a,
+                   (values ('profile:read'), ('profile:write'), ('users:manage')) as p(code)
+              where a.client_id = 'scrt-bff';
+
+              insert into role_permission (role_id, permission_id)
+              select r.id, p.id
+              from role r
+              join application a on a.id = r.application_id
+              join permission p on p.application_id = a.id
+              where a.client_id = 'scrt-bff'
+                and ((r.code = 'USER' and p.code in ('profile:read', 'profile:write'))
+                  or (r.code = 'ADMIN'));
+      rollback:
+        - sql:
+            sql: delete from application where client_id = 'scrt-bff'
