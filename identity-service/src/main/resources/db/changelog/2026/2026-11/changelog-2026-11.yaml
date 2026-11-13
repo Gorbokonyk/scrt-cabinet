@@ -8,3 +8,6 @@ databaseChangeLog:
   - include:
       relativeToChangelogFile: true
       file: seed_roles.yaml
+  - include:
+      relativeToChangelogFile: true
+      file: numeric_ids.yaml

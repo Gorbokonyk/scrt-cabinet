@@ -57,20 +57,6 @@ public class AuthorizationServerConfig {
 
     @Bean
     @Order(2)
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
-                        .requestMatchers("/login", "/error").permitAll()
-                        .anyRequest().denyAll())
-                .formLogin(Customizer.withDefaults());
-        return http.build();
-    }
-
-    @Bean
-    @Order(2)
     SecurityFilterChain apiChain(HttpSecurity http) throws Exception {
         JwtGrantedAuthoritiesConverter authorities = new JwtGrantedAuthoritiesConverter();
         authorities.setAuthoritiesClaimName("authorities");
@@ -85,6 +71,20 @@ public class AuthorizationServerConfig {
                 .oauth2ResourceServer(rs -> rs.jwt(j -> j.jwtAuthenticationConverter(converter)))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        return http.build();
+    }
+
+    @Bean
+    @Order(3)
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
+                        .requestMatchers("/login", "/error").permitAll()
+                        .anyRequest().denyAll())
+                .formLogin(Customizer.withDefaults());
         return http.build();
     }
 }

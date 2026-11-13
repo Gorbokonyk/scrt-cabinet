@@ -1,0 +1,49 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-id-num-columns
+      author: gorbokonyk
+      changes:
+        - sql:
+            sql: |
+              alter table app_user   add column id_num bigint generated always as identity;
+              alter table role       add column id_num bigint generated always as identity;
+              alter table permission add column id_num bigint generated always as identity;
+
+              alter table app_user   add constraint uq_app_user_id_num   unique (id_num);
+              alter table role       add constraint uq_role_id_num       unique (id_num);
+              alter table permission add constraint uq_permission_id_num unique (id_num);
+      rollback:
+        - sql:
+            sql: |
+              alter table app_user   drop column id_num;
+              alter table role       drop column id_num;
+              alter table permission drop column id_num;
+
+  - changeSet:
+      id: create-readable-views
+      author: gorbokonyk
+      changes:
+        - sql:
+            sql: |
+              create view v_user_roles as
+              select u.id_num as user_id_num, u.email,
+                     r.id_num as role_id_num, r.code as role,
+                     a.client_id
+              from user_role ur
+              join app_user u on u.id = ur.user_id
+              join role r on r.id = ur.role_id
+              join application a on a.id = r.application_id;
+
+              create view v_role_permissions as
+              select r.id_num as role_id_num, r.code as role,
+                     p.id_num as permission_id_num, p.code as permission,
+                     a.client_id
+              from role_permission rp
+              join role r on r.id = rp.role_id
+              join permission p on p.id = rp.permission_id
+              join application a on a.id = r.application_id;
+      rollback:
+        - sql:
+            sql: |
+              drop view v_user_roles;
+              drop view v_role_permissions;
